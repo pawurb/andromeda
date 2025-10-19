@@ -88,3 +88,7 @@ wgpu = { version = "27.0.1", features = ["wgsl", "webgpu"] }
 
 [profile.release]
 lto = true
+
+[profile.hotpath]
+inherits = "release"
+lto = false

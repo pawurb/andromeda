@@ -1,0 +1,38 @@
+name: profile-on-pr
+on:
+  pull_request:
+
+jobs:
+  profile-on-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install hotpath CLI
+        run: cargo install hotpath
+      - id: head_timing_metrics
+        run: |
+          # Extract timing metrics from head branch
+          {
+            echo 'metrics<<EOF'
+            cargo run --features='hotpath,hotpath-ci' --profile hotpath --bin andromeda examples/performance.ts | grep '^{"hotpath_profiling_mode"'
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+      - id: base_timing_metrics
+        run: |
+          # Extract timing metrics from base branch
+          git checkout ${{ github.event.pull_request.base.ref }}
+          {
+            echo 'metrics<<EOF'
+            cargo run --features='hotpath,hotpath-ci' --profile hotpath --bin andromeda examples/performance.ts | grep '^{"hotpath_profiling_mode"'
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+          git checkout ${{ github.event.pull_request.head.ref }}
+      - name: Run hotpath CLI - timing mode
+        run: hotpath profile-pr --head-metrics '${{ steps.head_timing_metrics.outputs.metrics }}' --base-metrics '${{ steps.base_timing_metrics.outputs.metrics }}' --github-token '${{ github.token }}' --pr-number '${{ github.event.pull_request.number }}'
