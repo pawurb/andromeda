@@ -13,3 +13,16 @@ function measureFn<T>(fn: () => T, name: string): T {
 for (let i = 0; i < 90; i++) {
   console.log(`Iteration ${i}: ${measureFn(() => i * i, `Square of ${i}`)}`);
 }
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// usage example
+async function sle() {
+  console.log('Before sleep');
+  await sleep(2000); // sleep for 2 seconds
+  console.log('After 2 seconds');
+}
+
+sle();
